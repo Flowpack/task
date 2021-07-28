@@ -10,7 +10,7 @@ use Neos\Flow\Annotations as Flow;
 use Neos\Flow\Log\Utility\LogEnvironment;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Lock\LockFactory;
-use Symfony\Component\Lock\Store\SemaphoreStore;
+use Symfony\Component\Lock\Store\StoreFactory;
 
 class PendingExecutionFinder
 {
@@ -27,10 +27,10 @@ class PendingExecutionFinder
     protected $taskHandlerFactory;
 
     /**
-     * @Flow\Inject
-     * @var SemaphoreStore
+     * @Flow\InjectConfiguration(package="Flowpack.Task", path="lockStorage")
+     * @var string
      */
-    protected $semaphoreStore;
+    protected $logStorageConfiguration;
 
     /**
      * @Flow\Inject
@@ -42,7 +42,7 @@ class PendingExecutionFinder
     {
         $runTime = new \DateTime();
 
-        $logFactory = new LockFactory($this->semaphoreStore);
+        $lockFactory = new LockFactory(StoreFactory::createStore($this->logStorageConfiguration));
 
         $skippedExecutions = [];
         while ($execution = $this->taskExecutionRepository->findNextScheduled($runTime, $skippedExecutions)) {
@@ -53,7 +53,7 @@ class PendingExecutionFinder
                 continue;
             }
 
-            $lock = $logFactory->createLock($handler->getLockIdentifier($execution->getWorkload()));
+            $lock = $lockFactory->createLock($handler->getLockIdentifier($execution->getWorkload()));
 
             if ($lock->acquire()) {
                 $skippedExecutions[] = $execution;

@@ -63,4 +63,5 @@ class Scheduler
         $nextExecution = new TaskExecution($task, $scheduleTime);
         $this->taskExecutionRepository->add($nextExecution);
     }
+
 }
