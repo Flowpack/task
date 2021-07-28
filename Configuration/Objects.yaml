@@ -1,0 +1,5 @@
+Task\Handler\TaskHandlerFactoryInterface:
+  className: 'Task\Handler\TaskHandlerFactory'
+
+Task\Builder\TaskBuilderFactoryInterface:
+  className: 'Task\Builder\TaskBuilderFactory'

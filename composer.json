@@ -1,0 +1,19 @@
+{
+    "description": "A Task scheduler for Neos Flow",
+    "type": "neos-package",
+    "name": "flowpack/task",
+    "require": {
+        "neos/flow": "*",
+        "php-task/php-task": "^1.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "Flowpack\\Task\\": "Classes/"
+        }
+    },
+    "extra": {
+        "neos": {
+            "package-key": "Flowpack.Task"
+        }
+    }
+}
