@@ -152,7 +152,7 @@ class TaskExecution
     /**
      * @return float
      */
-    public function getDuration(): float
+    public function getDuration(): ?float
     {
         return $this->duration;
     }

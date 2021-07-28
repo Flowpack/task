@@ -5,6 +5,7 @@ namespace Flowpack\Task\Domain\Repository;
 
 use DateTime;
 use Doctrine\DBAL\Types\Types;
+use Doctrine\ORM\AbstractQuery;
 use Flowpack\Task\Domain\Model\TaskExecution;
 use Neos\Flow\Annotations as Flow;
 use Flowpack\Task\Domain\Task\Task;
@@ -49,9 +50,11 @@ class TaskExecutionRepository extends Repository
         $query->matching(
             $query->logicalAnd(
                 $query->equals('taskIdentifier', $task->getIdentifier()),
-                $query->in('status', [TaskStatus::ABORTED, TaskStatus::COMPLETED, TaskStatus::FAILED, TaskStatus::RUNNING])
+                $query->logicalNot(
+                    $query->equals('status', TaskStatus::PLANNED)
+                )
             )
-        );
+        )->setOrderings(['scheduleTime' => QueryInterface::ORDER_DESCENDING]);
 
         return $query->execute();
     }
@@ -61,12 +64,12 @@ class TaskExecutionRepository extends Repository
         $queryBuilder = $this->createQueryBuilder('taskExecution');
 
         $queryBuilder
-            ->where(
-                $queryBuilder->expr()->lte('taskExecution.scheduleTime', ':scheduleTime')
-            )
+            ->where($queryBuilder->expr()->lte('taskExecution.scheduleTime', ':scheduleTime'))
+            ->andWhere($queryBuilder->expr()->eq('taskExecution.status', ':status'))
             ->orderBy('taskExecution.scheduleTime', QueryInterface::ORDER_DESCENDING)
             ->setMaxResults(1)
-            ->setParameter('scheduleTime', $runTime, Types::DATETIME_MUTABLE);
+            ->setParameter('scheduleTime', $runTime, Types::DATETIME_MUTABLE)
+            ->setParameter('status', TaskStatus::PLANNED);
 
         if (!empty($skippedExecutions)) {
             $queryBuilder->andWhere(
@@ -80,6 +83,6 @@ class TaskExecutionRepository extends Repository
                 ->setParameter('taskIdentifier', $task->getIdentifier());
         }
 
-        return current($queryBuilder->getQuery()->getResult());
+        return $queryBuilder->getQuery()->getOneOrNullResult(AbstractQuery::HYDRATE_OBJECT);
     }
 }

@@ -64,27 +64,26 @@ class TaskCommandController extends CommandController
         $this->scheduler->scheduleTasks();
 
         $this->output->outputTable(array_map(function (TaskInterface $task) {
-            $nextExecution = $this->taskExecutionRepository->findNextScheduled(new \DateTime(), [], $task);
+            /** @var TaskExecution $latestExecution */
+            $latestExecution = $this->taskExecutionRepository->findLatest($task)->getFirst();
+            $nextExecution = $this->taskExecutionRepository->findNextScheduled((new \DateTime())->add(new \DateInterval('P10Y')), [], $task);
             $nextExecutionInfo = 'Not Scheduled';
             if ($nextExecution instanceof TaskExecution) {
                 $nextExecutionDate = $nextExecution->getScheduleTime()->format('Y-m-d H:i:s');
                 $nextExecutionInfo = $nextExecution->getScheduleTime() < (new \DateTime()) ? sprintf('<error>%s (delayed)</error>', $nextExecutionDate) : $nextExecutionDate;
             }
-
-            /** @var TaskExecution $latestExecution */
-            $latestExecution = $this->taskExecutionRepository->findLatest($task)->getFirst();
-
             return [
                 $task->getIdentifier(),
                 $task->getLabel(),
                 $task->getCronExpression()->getExpression(),
                 $task->getHandlerClass(),
                 $latestExecution === null ? '-' : $latestExecution->getEndTime()->format('Y-m-d H:i:s') ?? $latestExecution->getStartTime()->format('Y-m-d H:i:s'),
-                $latestExecution->getStatus() === null ? '-' : sprintf('<%s>%s</%s>', $this->lastExecutionStatusMapping[$latestExecution->getStatus()], $latestExecution->getStatus(), $this->lastExecutionStatusMapping[$latestExecution->getStatus()]),
+                $latestExecution === null ? '-' : sprintf('<%s>%s</%s>', $this->lastExecutionStatusMapping[$latestExecution->getStatus()], $latestExecution->getStatus(), $this->lastExecutionStatusMapping[$latestExecution->getStatus()]),
+                $latestExecution === null || $latestExecution->getDuration() === null ? '-' : number_format($latestExecution->getDuration(), 2) . ' s',
                 $nextExecutionInfo,
             ];
         }, $this->taskCollectionFactory->buildTasksFromConfiguration()->toArray()),
-            ['Identifier', 'Label', 'Cron Expression', 'Handler Class', 'Previous Run Date', 'Previous Run Status', 'Next Run']
+            ['Identifier', 'Label', 'Cron Expression', 'Handler Class', 'Previous Run Date', 'Previous Run Status', 'Previous Run Duration', 'Next Run']
         );
     }
 }

@@ -8,10 +8,10 @@ use Flowpack\Task\Domain\Task\Task;
 use Flowpack\Task\Domain\Task\TaskCollectionFactory;
 use Neos\Flow\Annotations as Flow;
 use Flowpack\Task\Domain\Repository\TaskExecutionRepository;
+use Neos\Flow\Persistence\Doctrine\PersistenceManager;
 
 class Scheduler
 {
-
     /**
      * @Flow\Inject
      * @var TaskCollectionFactory
@@ -25,6 +25,12 @@ class Scheduler
     protected $taskExecutionRepository;
 
     /**
+     * @Flow\Inject
+     * @var PersistenceManager
+     */
+    protected $persistenceManager;
+
+    /**
      * @throws \Exception
      */
     public function scheduleTasks(): void
@@ -32,6 +38,8 @@ class Scheduler
         foreach ($this->taskCollectionFactory->buildTasksFromConfiguration()->filterEndBeforeNow() as $task) {
             $this->scheduleTask($task);
         }
+
+        $this->persistenceManager->persistAll();
     }
 
     /**

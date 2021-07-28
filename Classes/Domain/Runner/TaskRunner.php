@@ -16,9 +16,11 @@ use Flowpack\Task\Exceptions\TaskFailedException;
 use Flowpack\Task\Exceptions\TaskRetryException;
 use Flowpack\Task\TaskHandler\TaskHandlerFactory;
 use Neos\Flow\Annotations as Flow;
+use Neos\Flow\Log\Utility\LogEnvironment;
 use Neos\Flow\Persistence\Doctrine\PersistenceManager;
 use Neos\Flow\Persistence\Exception\IllegalObjectTypeException;
 use Neos\Flow\Persistence\Exception\UnknownObjectException;
+use Psr\Log\LoggerInterface;
 
 class TaskRunner
 {
@@ -45,6 +47,12 @@ class TaskRunner
      * @var TaskHandlerFactory
      */
     protected $taskHandlerFactory;
+
+    /**
+     * @Flow\Inject
+     * @var LoggerInterface
+     */
+    protected $logger;
 
     public function runTasks(): void
     {
@@ -112,14 +120,18 @@ class TaskRunner
         $handler = $this->taskHandlerFactory->get($execution->getHandlerClass());
 
         try {
+            $this->logger->info(sprintf('Start running task %s', $execution->getTaskIdentifier()), LogEnvironment::fromMethodName(__METHOD__));
             return $handler->handle($execution->getWorkload());
         } catch (TaskFailedException $exception) {
+            $this->logger->error(sprintf('Task %s failed with exception "%s"', $execution->getTaskIdentifier(), $exception->getPrevious()->getMessage()), LogEnvironment::fromMethodName(__METHOD__));
             throw $exception->getPrevious();
         } catch (Exception $exception) {
             if (!$handler instanceof TaskRetryException) {
+                $this->logger->error(sprintf('Task %s failed with exception "%s"', $execution->getTaskIdentifier(), $exception->getMessage()), LogEnvironment::fromMethodName(__METHOD__));
                 throw $exception;
             }
 
+            $this->logger->warning(sprintf('Restarting Task %s, after failing with exception "%s"', $execution->getTaskIdentifier(), $exception->getMessage()), LogEnvironment::fromMethodName(__METHOD__));
             throw new TaskRetryException($handler->getMaximumAttempts(), $exception);
         }
     }
