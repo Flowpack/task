@@ -10,8 +10,8 @@ use Flowpack\Task\Domain\Repository\TaskExecutionRepository;
 use Flowpack\Task\Domain\Scheduler\Scheduler;
 use Flowpack\Task\Domain\Task\TaskCollectionFactory;
 use Flowpack\Task\Tests\Functional\Fixture\TestHandler;
+use Flowpack\Task\Tests\Functional\Helper\TaskCollectionConfigurationHelper;
 use Neos\Flow\Tests\FunctionalTestCase;
-use Neos\Utility\ObjectAccess;
 
 class SchedulerTest extends FunctionalTestCase
 {
@@ -39,11 +39,14 @@ class SchedulerTest extends FunctionalTestCase
      */
     public function taskGetsScheduledOnce(): void
     {
-        $this->prepareTaskCollectionFactoryWithConfiguration([
-            'singleTask' => [
-                'handlerClass' => TestHandler::class,
+        TaskCollectionConfigurationHelper::prepareTaskCollectionFactoryWithConfiguration(
+            $this->taskCollectionFactory,
+            [
+                'singleTask' => [
+                    'handlerClass' => TestHandler::class,
+                ]
             ]
-        ]);
+        );
 
         $this->scheduler->scheduleTasks();
         $this->persistenceManager->persistAll();
@@ -59,12 +62,15 @@ class SchedulerTest extends FunctionalTestCase
      */
     public function taskIsNotScheduledIfLastExecutionIsInThePast(): void
     {
-        $this->prepareTaskCollectionFactoryWithConfiguration([
-            'taskInThePast' => [
-                'handlerClass' => TestHandler::class,
-                'lastExecution' => '2021-01-01',
+        TaskCollectionConfigurationHelper::prepareTaskCollectionFactoryWithConfiguration(
+            $this->taskCollectionFactory,
+            [
+                'taskInThePast' => [
+                    'handlerClass' => TestHandler::class,
+                    'lastExecution' => '2021-01-01',
+                ]
             ]
-        ]);
+        );
 
         $this->scheduler->scheduleTasks();
         $this->persistenceManager->persistAll();
@@ -78,12 +84,15 @@ class SchedulerTest extends FunctionalTestCase
      */
     public function cronExpressionIsInterpreted(): void
     {
-        $this->prepareTaskCollectionFactoryWithConfiguration([
-            'taskInThePast' => [
-                'handlerClass' => TestHandler::class,
-                'cronExpression' => '0 0 * * *',
+        TaskCollectionConfigurationHelper::prepareTaskCollectionFactoryWithConfiguration(
+            $this->taskCollectionFactory,
+            [
+                'taskInThePast' => [
+                    'handlerClass' => TestHandler::class,
+                    'cronExpression' => '0 0 * * *',
+                ]
             ]
-        ]);
+        );
 
         $this->scheduler->scheduleTasks();
         $this->persistenceManager->persistAll();
@@ -96,10 +105,32 @@ class SchedulerTest extends FunctionalTestCase
         self::assertEquals($taskExecution->getScheduleTime(), (new DateTime())->modify('+1 day')->setTime(0, 0, 0));
     }
 
-    protected function prepareTaskCollectionFactoryWithConfiguration(array $taskConfigurations): void
+    /**
+     * @test
+     */
+    public function firstExecutionOverridesCron(): void
     {
-        ObjectAccess::setProperty($this->taskCollectionFactory, 'taskConfigurations', $taskConfigurations, true);
-        ObjectAccess::setProperty($this->taskCollectionFactory, 'taskCollection', null, true);
-    }
+        $effectiveFirstExecution = (new DateTime('now'))->setTime(8, 0, 0)->add(new \DateInterval('P1D'));
 
+        TaskCollectionConfigurationHelper::prepareTaskCollectionFactoryWithConfiguration(
+            $this->taskCollectionFactory,
+            [
+                'taskInThePast' => [
+                    'handlerClass' => TestHandler::class,
+                    'cronExpression' => '* * * * *',
+                    'firstExecution' => $effectiveFirstExecution->format('Y-m-d H:i:0')
+                ]
+            ]
+        );
+
+        $this->scheduler->scheduleTasks();
+        $this->persistenceManager->persistAll();
+
+        $taskExecutions = $this->taskExecutionRepository->findAll();
+        self::assertEquals(1, $taskExecutions->count());
+
+        /** @var TaskExecution $taskExecution */
+        $taskExecution = $taskExecutions->getFirst();
+        self::assertEquals($taskExecution->getScheduleTime(), $effectiveFirstExecution);
+    }
 }

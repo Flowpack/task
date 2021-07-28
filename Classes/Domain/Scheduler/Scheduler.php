@@ -27,7 +27,7 @@ class Scheduler
     /**
      * @throws \Exception
      */
-    public function scheduleTasks():void
+    public function scheduleTasks(): void
     {
         foreach ($this->taskCollectionFactory->buildTasksFromConfiguration()->filterEndBeforeNow() as $task) {
             $this->scheduleTask($task);
@@ -52,7 +52,14 @@ class Scheduler
             return;
         }
 
-        $scheduleTime = $task->getCronExpression() ? $task->getCronExpression()->getNextRunDate() : $task->getFirstExecution();
+        $nextCronRunDate = $task->getCronExpression() ? $task->getCronExpression()->getNextRunDate() : null;
+
+        if ($nextCronRunDate !== null && $nextCronRunDate > $task->getFirstExecution()) {
+            $scheduleTime = $task->getCronExpression()->getNextRunDate();
+        } else {
+            $scheduleTime = $task->getFirstExecution();
+        }
+
         $nextExecution = new TaskExecution($task, $scheduleTime);
         $this->taskExecutionRepository->add($nextExecution);
     }

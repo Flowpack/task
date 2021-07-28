@@ -17,7 +17,7 @@ class TaskCollectionFactory
      */
     protected array $taskConfigurations = [];
 
-    protected ?TaskCollection $taskCollection;
+    protected ?TaskCollection $taskCollection = null;
 
     public function buildTasksFromConfiguration(): TaskCollection
     {

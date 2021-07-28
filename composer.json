@@ -3,7 +3,9 @@
     "type": "neos-package",
     "name": "flowpack/task",
     "require": {
+        "php": "7.4",
         "neos/flow": "*",
+        "symfony/lock": "^5.3",
         "php-task/php-task": "^1.5"
     },
     "autoload": {

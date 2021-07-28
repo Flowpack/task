@@ -180,4 +180,81 @@ class TaskExecution
     {
         return $this->attempts;
     }
+
+    /**
+     * @param \DateTime $startTime
+     * @return TaskExecution
+     */
+    public function setStartTime(\DateTime $startTime): TaskExecution
+    {
+        $this->startTime = $startTime;
+        return $this;
+    }
+
+    /**
+     * @param \DateTime $endTime
+     * @return TaskExecution
+     */
+    public function setEndTime(\DateTime $endTime): TaskExecution
+    {
+        $this->endTime = $endTime;
+        return $this;
+    }
+
+    /**
+     * @param float $duration
+     * @return TaskExecution
+     */
+    public function setDuration(float $duration): TaskExecution
+    {
+        $this->duration = $duration;
+        return $this;
+    }
+
+    /**
+     * @param string $result
+     * @return TaskExecution
+     */
+    public function setResult(string $result): TaskExecution
+    {
+        $this->result = $result;
+        return $this;
+    }
+
+    /**
+     * @param string $exception
+     * @return TaskExecution
+     */
+    public function setException(string $exception): TaskExecution
+    {
+        $this->exception = $exception;
+        return $this;
+    }
+
+    /**
+     * @param int $attempts
+     * @return TaskExecution
+     */
+    public function setAttempts(int $attempts): TaskExecution
+    {
+        $this->attempts = $attempts;
+        return $this;
+    }
+
+    public function reset(): TaskExecution
+    {
+        $this->startTime = null;
+        $this->endTime = null;
+        $this->result = null;
+        $this->exception = null;
+        $this->status = TaskStatus::PLANNED;
+
+        return $this;
+    }
+
+    public function incrementAttempts(): TaskExecution
+    {
+        $this->attempts++;
+        return $this;
+    }
 }
