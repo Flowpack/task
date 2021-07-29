@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace Flowpack\Task\TaskHandler;
 
 use Flowpack\Task\Domain\Task\Workload;
-use Task\Handler\TaskHandlerInterface;
 
 /**
  * Handler which implements this interface locks other executions during run.
