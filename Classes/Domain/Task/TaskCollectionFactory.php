@@ -32,7 +32,7 @@ class TaskCollectionFactory
             $cronExpressionPattern = $taskConfiguration['cronExpression'] ?? '';
             $cronExpression = $cronExpressionPattern !== '' ? new CronExpression($cronExpressionPattern) : null;
 
-            $this->taskCollection->add(new Task(
+            $this->taskCollection->set($taskIdentifier, new Task(
                 $taskIdentifier,
                 $cronExpression,
                 $taskConfiguration['handlerClass'],
