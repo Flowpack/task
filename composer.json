@@ -2,6 +2,7 @@
     "description": "A Task scheduler for Neos Flow",
     "type": "neos-package",
     "name": "flowpack/task",
+    "license": "MIT",
     "require": {
         "php": "7.4",
         "neos/flow": "*",
