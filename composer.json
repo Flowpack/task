@@ -5,8 +5,7 @@
     "require": {
         "php": "7.4",
         "neos/flow": "*",
-        "symfony/lock": "^5.3",
-        "php-task/php-task": "^1.5"
+        "symfony/lock": "^5.3"
     },
     "autoload": {
         "psr-4": {
