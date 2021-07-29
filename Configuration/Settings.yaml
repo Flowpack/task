@@ -2,14 +2,3 @@ Flowpack:
   Task:
     # See https://symfony.com/doc/current/components/lock.html#available-stores for more options
     lockStorage: 'flock://%FLOW_PATH_TEMPORARY%/SymfonyLockStorage'
-
-    tasks:
-      send-csv:
-        label: 'Persisted Form Data Mailer'
-        description: 'Automatically sends persisted form data to given recipients'
-        cronExpression: '* * * * *'
-        handlerClass: 'Cgm\FormBuilder\FormPersistence\DataMailer\DataMailer'
-        workload:
-          option1: 'foo'
-          options2: 'bar'
-
