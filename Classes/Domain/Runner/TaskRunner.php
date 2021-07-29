@@ -82,7 +82,7 @@ class TaskRunner
             $execution = $this->hasPassed($execution, $this->handle($execution));
         } catch (TaskExitException $exception) {
             throw $exception;
-        } catch (Exception $exception) {
+        } catch (\Throwable $exception) {
             $execution = $this->hasFailed($execution, $exception);
         } finally {
             $this->finalize($execution, $startTime);

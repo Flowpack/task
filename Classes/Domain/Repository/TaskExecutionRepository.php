@@ -43,7 +43,7 @@ class TaskExecutionRepository extends Repository
         return $query->execute();
     }
 
-    public function findLatest(Task $task): QueryResultInterface
+    public function findLatest(Task $task, int $limit = 5): QueryResultInterface
     {
         $query = $this->createQuery();
 

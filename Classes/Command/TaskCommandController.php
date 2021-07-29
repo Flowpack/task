@@ -7,6 +7,7 @@ use Flowpack\Task\Domain\Model\TaskExecution;
 use Flowpack\Task\Domain\Repository\TaskExecutionRepository;
 use Flowpack\Task\Domain\Runner\TaskRunner;
 use Flowpack\Task\Domain\Scheduler\Scheduler;
+use Flowpack\Task\Domain\Task\Task;
 use Flowpack\Task\Domain\Task\TaskCollectionFactory;
 use Flowpack\Task\Domain\Task\TaskInterface;
 use Flowpack\Task\Domain\Task\TaskStatus;
@@ -66,12 +67,6 @@ class TaskCommandController extends CommandController
         $this->output->outputTable(array_map(function (TaskInterface $task) {
             /** @var TaskExecution $latestExecution */
             $latestExecution = $this->taskExecutionRepository->findLatest($task)->getFirst();
-            $nextExecution = $this->taskExecutionRepository->findNextScheduled((new \DateTime())->add(new \DateInterval('P10Y')), [], $task);
-            $nextExecutionInfo = 'Not Scheduled';
-            if ($nextExecution instanceof TaskExecution) {
-                $nextExecutionDate = $nextExecution->getScheduleTime()->format('Y-m-d H:i:s');
-                $nextExecutionInfo = $nextExecution->getScheduleTime() < (new \DateTime()) ? sprintf('<error>%s (delayed)</error>', $nextExecutionDate) : $nextExecutionDate;
-            }
             return [
                 $task->getIdentifier(),
                 $task->getLabel(),
@@ -80,10 +75,61 @@ class TaskCommandController extends CommandController
                 $latestExecution === null ? '-' : $latestExecution->getEndTime()->format('Y-m-d H:i:s') ?? $latestExecution->getStartTime()->format('Y-m-d H:i:s'),
                 $latestExecution === null ? '-' : sprintf('<%s>%s</%s>', $this->lastExecutionStatusMapping[$latestExecution->getStatus()], $latestExecution->getStatus(), $this->lastExecutionStatusMapping[$latestExecution->getStatus()]),
                 $latestExecution === null || $latestExecution->getDuration() === null ? '-' : number_format($latestExecution->getDuration(), 2) . ' s',
-                $nextExecutionInfo,
+                $this->getNextExecutionInfo($task),
             ];
         }, $this->taskCollectionFactory->buildTasksFromConfiguration()->toArray()),
             ['Identifier', 'Label', 'Cron Expression', 'Handler Class', 'Previous Run Date', 'Previous Run Status', 'Previous Run Duration', 'Next Run']
         );
+    }
+
+    /**
+     * @param string $taskIdentifier
+     */
+    public function showCommand(string $taskIdentifier): void
+    {
+        /** @var Task $task */
+        $task = $this->taskCollectionFactory->buildTasksFromConfiguration()->get($taskIdentifier);
+        $this->outputLine(sprintf('<b>%s (%s)</b>', $task->getLabel(), $taskIdentifier));
+        $this->outputLine(PHP_EOL . $task->getDescription() . PHP_EOL);
+
+        $this->outputLine('<b>Task Info</b>');
+        $this->output->outputTable(
+            [
+                ['Cron Expression', $task->getCronExpression()],
+                ['First Execution', $task->getFirstExecution() === null ? '-' : $task->getFirstExecution()->format('Y-m-d H:i:s')],
+                ['Last Execution', $task->getLastExecution() === null ? '-' : $task->getLastExecution()->format('Y-m-d H:i:s')],
+                ['Handler Class', $task->getHandlerClass()],
+                ['Workload', json_encode($task->getWorkload()->getData(), JSON_THROW_ON_ERROR + JSON_PRETTY_PRINT)],
+                ['Next Run', $this->getNextExecutionInfo($task)],
+            ]
+        );
+
+        $this->outputLine(PHP_EOL . '<b>Task Executions</b>');
+        $taskExecutions = $this->taskExecutionRepository->findLatest($task);
+
+        if ($taskExecutions->count() === 0) {
+            $this->outputLine('This task has not yet been executed.');
+            return;
+        }
+
+        foreach ($this->taskExecutionRepository->findLatest($task) as $execution) {
+            /** @var TaskExecution $execution */
+            $this->outputLine(sprintf('<b>%s</b>', $execution->getScheduleTime()));
+        }
+    }
+
+    /**
+     * @param $task
+     * @return string
+     */
+    private function getNextExecutionInfo($task): string
+    {
+        $nextExecution = $this->taskExecutionRepository->findNextScheduled((new \DateTime())->add(new \DateInterval('P10Y')), [], $task);
+        $nextExecutionInfo = 'Not Scheduled';
+        if ($nextExecution instanceof TaskExecution) {
+            $nextExecutionDate = $nextExecution->getScheduleTime()->format('Y-m-d H:i:s');
+            $nextExecutionInfo = $nextExecution->getScheduleTime() < (new \DateTime()) ? sprintf('<error>%s (delayed)</error>', $nextExecutionDate) : $nextExecutionDate;
+        }
+        return $nextExecutionInfo;
     }
 }
