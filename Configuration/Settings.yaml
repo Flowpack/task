@@ -2,3 +2,4 @@ Flowpack:
   Task:
     # See https://symfony.com/doc/current/components/lock.html#available-stores for more options
     lockStorage: 'flock://%FLOW_PATH_TEMPORARY%/SymfonyLockStorage'
+    tasks: []
