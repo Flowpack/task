@@ -1,12 +1,9 @@
 <?php
-/*
- *  (c) 2021 punkt.de GmbH - Karlsruhe, Germany - http://punkt.de
- *  All rights reserved.
- */
+declare(strict_types=1);
 
 namespace Flowpack\Task\Domain\Task;
 
-interface WorkloadInterface extends \JsonSerializable
+interface WorkloadInterface
 {
     public function getData(): array;
 

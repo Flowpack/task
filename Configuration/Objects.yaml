@@ -1,0 +1,2 @@
+Flowpack\Task\Domain\Task\WorkloadInterface:
+  className: 'Flowpack\Task\Domain\Task\Workload'

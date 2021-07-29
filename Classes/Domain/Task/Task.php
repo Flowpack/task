@@ -17,7 +17,7 @@ class Task implements TaskInterface
 
     protected ?CronExpression $cronExpression;
 
-    protected ?Workload $workload = null;
+    protected ?WorkloadInterface $workload = null;
 
     protected ?\DateTime $firstExecution;
 
