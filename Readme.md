@@ -17,18 +17,18 @@ composer require 'flowpack/task'
 ### Defining A Task
 
 ```yaml
-	Flowpack:
-	  Task:
-	    tasks:
-	      'a-unique-identifier':
-	        label: The label of this task
-	        description: Some detailed description of thsi task
-	        # A class, implementing the TaskHandlerInterface  
-	        handlerClass: 'Vendor\Package\TaskHandler\TaskHandlerClass'
-	        cronExpression: '*/5 * * * *'
-	        # A workload, eg. some configuration, given to the taskHandler
-	        workload:
-	          interval: PT5M
+Flowpack:
+  Task:
+    tasks:
+      'a-unique-identifier':
+        label: The label of this task
+        description: Some detailed description of thsi task
+        # A class, implementing the TaskHandlerInterface  
+        handlerClass: 'Vendor\Package\TaskHandler\TaskHandlerClass'
+        cronExpression: '*/5 * * * *'
+        # A workload, eg. some configuration, given to the taskHandler
+        workload:
+          interval: PT5M
 ```
 
 ### General Options
