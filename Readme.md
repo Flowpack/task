@@ -53,6 +53,12 @@ Also requires `getLockIdentifier(WorkloadInterface $workload): string` to be imp
 
 ## Available Commands
 
+Schedule and run due tasks
+
+```sh
+./flow task:run
+```
+
 Show a list of all defined and scheduled tasks:
 
 ```sh
