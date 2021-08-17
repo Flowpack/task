@@ -72,7 +72,7 @@ class TaskCommandController extends CommandController
                 $task->getLabel(),
                 $task->getCronExpression()->getExpression(),
                 $task->getHandlerClass(),
-                $latestExecution === null ? '-' : $latestExecution->getEndTime()->format('Y-m-d H:i:s') ?? $latestExecution->getStartTime()->format('Y-m-d H:i:s'),
+                $latestExecution === null || $latestExecution->getEndTime() === null ? '-' : $latestExecution->getEndTime()->format('Y-m-d H:i:s') ?? $latestExecution->getStartTime()->format('Y-m-d H:i:s'),
                 $latestExecution === null ? '-' : sprintf('<%s>%s</%s>', $this->lastExecutionStatusMapping[$latestExecution->getStatus()], $latestExecution->getStatus(), $this->lastExecutionStatusMapping[$latestExecution->getStatus()]),
                 $latestExecution === null || $latestExecution->getDuration() === null ? '-' : number_format($latestExecution->getDuration(), 2) . ' s',
                 $this->getNextExecutionInfo($task),

@@ -144,7 +144,7 @@ class TaskExecution
     /**
      * @return \DateTime
      */
-    public function getEndTime(): \DateTime
+    public function getEndTime(): ?\DateTime
     {
         return $this->endTime;
     }
