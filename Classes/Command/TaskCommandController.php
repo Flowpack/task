@@ -58,6 +58,20 @@ class TaskCommandController extends CommandController
     }
 
     /**
+     * Run a task directly
+     *
+     * @param string $taskIdentifier
+     * @throws \Exception
+     */
+    public function runSingleCommand(string $taskIdentifier): void
+    {
+        $task = $this->taskCollectionFactory->buildTasksFromConfiguration()->getTask($taskIdentifier);
+        $this->scheduler->scheduleTask($task);
+        $this->taskRunner->runTasks();
+        $this->scheduler->scheduleTasks();
+    }
+
+    /**
      * Lists all defined tasks
      */
     public function listCommand(): void

@@ -66,7 +66,7 @@ class TaskExecution
 
     /**
      * @var string
-     * @ORM\Column(nullable=true)
+     * @ORM\Column(nullable = true, type = "text")
      */
     protected $exception;
 

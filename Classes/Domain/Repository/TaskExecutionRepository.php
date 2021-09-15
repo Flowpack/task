@@ -43,6 +43,21 @@ class TaskExecutionRepository extends Repository
         return $query->execute();
     }
 
+    public function removePlannedTask(Task $task): void
+    {
+        $query = $this->createQuery();
+        $query->matching(
+            $query->logicalAnd(
+                $query->equals('taskIdentifier', $task->getIdentifier()),
+                $query->equals('status', TaskStatus::PLANNED)
+            )
+        );
+
+        foreach ($query->execute() as $scheduledTask) {
+            $this->remove($scheduledTask);
+        }
+    }
+
     public function findLatest(Task $task, int $limit = 5): QueryResultInterface
     {
         $query = $this->createQuery();

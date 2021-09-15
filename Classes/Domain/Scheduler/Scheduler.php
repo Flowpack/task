@@ -42,6 +42,16 @@ class Scheduler
         $this->persistenceManager->persistAll();
     }
 
+    public function scheduleTaskForDate(string $taskIdentifier, \DateTime $runDate): void
+    {
+        $task = $this->taskCollectionFactory->buildTasksFromConfiguration()->getTask($taskIdentifier);
+        $task->setCronExpression(null);
+        $task->setFirstExecution($runDate);
+        $this->taskExecutionRepository->removePlannedTask($task);
+        $this->persistenceManager->persistAll();
+        $this->scheduleTask($task);
+    }
+
     /**
      * Schedule execution for given task.
      *

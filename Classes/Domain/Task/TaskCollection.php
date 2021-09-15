@@ -7,6 +7,11 @@ use Doctrine\Common\Collections\ArrayCollection;
 
 class TaskCollection extends ArrayCollection
 {
+    public function getTask(string $taskIdentifier): Task
+    {
+        return $this->get($taskIdentifier);
+    }
+
     public function filterEndBeforeNow(): ArrayCollection
     {
         return $this->filter(static function (Task $task, $taskIdentifier) {

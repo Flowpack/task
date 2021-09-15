@@ -84,4 +84,24 @@ class Task implements TaskInterface
     {
         return $this->lastExecution;
     }
+
+    /**
+     * @param CronExpression|null $cronExpression
+     * @return Task
+     */
+    public function setCronExpression(?CronExpression $cronExpression): Task
+    {
+        $this->cronExpression = $cronExpression;
+        return $this;
+    }
+
+    /**
+     * @param \DateTime|null $firstExecution
+     * @return Task
+     */
+    public function setFirstExecution(?\DateTime $firstExecution): Task
+    {
+        $this->firstExecution = $firstExecution;
+        return $this;
+    }
 }
