@@ -1,5 +1,7 @@
 # Flow Framework Task Scheduler
 
+[![Latest Stable Version](https://poser.pugx.org/flowpack/task/v/stable)](https://packagist.org/packages/flowpack/task) [![Total Downloads](https://poser.pugx.org/flowpack/task/downloads)](https://packagist.org/packages/flowpack/task) [![License](https://poser.pugx.org/flowpack/task/license)](https://packagist.org/packages/flowpack/task)
+
 This package provides a simple to use task scheduler for Neos Flow. Tasks are configured via settings, recurring tasks can be configured using cron syntax. Detailed options configure the first and last executions as well as options for the class handling the task. 
 
 Scheduling and running tasks are decoupled: The `Scheduler` schedules tasks whcih the are executed by the `TaskRunner`. This architecture allows receiving and displaying metrics of already executed tasks.
