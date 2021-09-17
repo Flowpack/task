@@ -33,7 +33,9 @@ Flowpack:
 
 ### General Options
 
-`lockStorage`: Configuration string for the lock storage used for taksHandler implementing `LockingTaskHandlerInterface`. See https://symfony.com/doc/current/components/lock.html#available-stores for more options
+`lockStorage`: Configuration string for the lock storage used for taskHandler implementing `LockingTaskHandlerInterface`. See https://symfony.com/doc/current/components/lock.html#available-stores for more options
+
+`keepTaskExecutionHistory`: Number of task executions to keep in the database. (default: 3)
 
 ## Implementing A Task Handler
 

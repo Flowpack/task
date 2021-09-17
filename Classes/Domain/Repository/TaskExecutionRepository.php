@@ -58,7 +58,7 @@ class TaskExecutionRepository extends Repository
         }
     }
 
-    public function findLatest(Task $task, int $limit = 5): QueryResultInterface
+    public function findLatestExecution(Task $task, int $limit = 5, int $offset = 0): QueryResultInterface
     {
         $query = $this->createQuery();
 
@@ -69,7 +69,16 @@ class TaskExecutionRepository extends Repository
                     $query->equals('status', TaskStatus::PLANNED)
                 )
             )
-        )->setOrderings(['scheduleTime' => QueryInterface::ORDER_DESCENDING]);
+        )
+            ->setOrderings(['scheduleTime' => QueryInterface::ORDER_DESCENDING]);
+
+        if ($limit > 0) {
+            $query->setLimit($limit);
+        }
+
+        if ($offset > 0) {
+            $query->setOffset($offset);
+        }
 
         return $query->execute();
     }
@@ -100,4 +109,6 @@ class TaskExecutionRepository extends Repository
 
         return $queryBuilder->getQuery()->getOneOrNullResult(AbstractQuery::HYDRATE_OBJECT);
     }
+
+
 }
