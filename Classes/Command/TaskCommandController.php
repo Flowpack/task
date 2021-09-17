@@ -9,6 +9,7 @@ use Flowpack\Task\Domain\Runner\TaskRunner;
 use Flowpack\Task\Domain\Scheduler\Scheduler;
 use Flowpack\Task\Domain\Task\Task;
 use Flowpack\Task\Domain\Task\TaskCollectionFactory;
+use Flowpack\Task\Domain\Task\TaskExecutionHistory;
 use Flowpack\Task\Domain\Task\TaskInterface;
 use Flowpack\Task\Domain\Task\TaskStatus;
 use Neos\Flow\Annotations as Flow;
@@ -41,6 +42,12 @@ class TaskCommandController extends CommandController
      */
     protected $taskRunner;
 
+    /**
+     * @Flow\Inject
+     * @var TaskExecutionHistory
+     */
+    protected $taskExecutionHistory;
+
     protected array $lastExecutionStatusMapping = [
         TaskStatus::FAILED => 'error',
         TaskStatus::COMPLETED => 'success',
@@ -55,6 +62,7 @@ class TaskCommandController extends CommandController
     {
         $this->scheduler->scheduleTasks();
         $this->taskRunner->runTasks();
+        $this->taskExecutionHistory->cleanup();
     }
 
     /**
@@ -69,6 +77,7 @@ class TaskCommandController extends CommandController
         $this->scheduler->scheduleTask($task);
         $this->taskRunner->runTasks();
         $this->scheduler->scheduleTasks();
+        $this->taskExecutionHistory->cleanup();
     }
 
     /**
@@ -80,7 +89,7 @@ class TaskCommandController extends CommandController
 
         $this->output->outputTable(array_map(function (TaskInterface $task) {
             /** @var TaskExecution $latestExecution */
-            $latestExecution = $this->taskExecutionRepository->findLatest($task)->getFirst();
+            $latestExecution = $this->taskExecutionRepository->findLatestExecution($task, 1, 0)->getFirst();
             return [
                 $task->getIdentifier(),
                 $task->getLabel(),
@@ -98,6 +107,7 @@ class TaskCommandController extends CommandController
 
     /**
      * @param string $taskIdentifier
+     * @throws \JsonException
      */
     public function showCommand(string $taskIdentifier): void
     {
@@ -119,14 +129,14 @@ class TaskCommandController extends CommandController
         );
 
         $this->outputLine(PHP_EOL . '<b>Task Executions</b>');
-        $taskExecutions = $this->taskExecutionRepository->findLatest($task);
+        $taskExecutions = $this->taskExecutionRepository->findLatestExecution($task);
 
         if ($taskExecutions->count() === 0) {
             $this->outputLine('This task has not yet been executed.');
             return;
         }
 
-        foreach ($this->taskExecutionRepository->findLatest($task) as $execution) {
+        foreach ($taskExecutions as $execution) {
             /** @var TaskExecution $execution */
             $this->outputLine(sprintf('<b>%s</b>', $execution->getScheduleTime()));
         }
