@@ -158,10 +158,10 @@ class TaskRunner
         return $execution;
     }
 
-    private function hasFailed(TaskExecution $execution, Exception $exception): TaskExecution
+    private function hasFailed(TaskExecution $execution, \Throwable $throwable): TaskExecution
     {
         $this->reFetchExecution($execution);
-        $execution->setException($exception->__toString());
+        $execution->setException($throwable->__toString());
         $execution->setStatus(TaskStatus::FAILED);
 
         return $execution;
