@@ -136,10 +136,16 @@ class TaskCommandController extends CommandController
             return;
         }
 
-        foreach ($taskExecutions as $execution) {
-            /** @var TaskExecution $execution */
-            $this->outputLine(sprintf('<b>%s</b>', $execution->getScheduleTime()));
-        }
+        $this->output->outputTable(
+            array_map(function (TaskExecution $execution) {
+                return [
+                    sprintf('<b>%s</b>', $execution->getScheduleTime()->format('Y-m-d H:i:s')),
+                    number_format($execution->getDuration(), 2) . ' s',
+                    sprintf('<%s>%s</%s> %s %s', $this->lastExecutionStatusMapping[$execution->getStatus()], $execution->getStatus(), $this->lastExecutionStatusMapping[$execution->getStatus()], (string) $execution->getResult(), (string) $execution->getException()),
+                ];
+            }, $taskExecutions->toArray()),
+            ['Date','Run Duration', 'Status']
+        );
     }
 
     /**

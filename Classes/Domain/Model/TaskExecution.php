@@ -160,7 +160,7 @@ class TaskExecution
     /**
      * @return string
      */
-    public function getResult(): string
+    public function getResult(): ?string
     {
         return $this->result;
     }
