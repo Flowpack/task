@@ -170,7 +170,7 @@ class TaskExecution
      */
     public function getException(): string
     {
-        return $this->exception;
+        return (string)$this->exception;
     }
 
     /**
