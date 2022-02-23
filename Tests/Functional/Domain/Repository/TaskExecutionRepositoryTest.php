@@ -40,13 +40,11 @@ class TaskExecutionRepositoryTest extends FunctionalTestCase
             [
                 'taskOne' => [
                     'handlerClass' => TestHandler::class,
-                    'cronExpression' => '5 * * * *',
-
+                    'cronExpression' => '* * * * *',
                 ],
                 'taskTwo' => [
                     'handlerClass' => TestHandler::class,
-                    'cronExpression' => '* * * * *',
-
+                    'cronExpression' => '5 * * * *',
                 ],
                 'taskThree' => [
                     'handlerClass' => TestHandler::class,

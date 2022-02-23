@@ -6,11 +6,13 @@ namespace Flowpack\Task\Domain\Repository;
 use DateTime;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\AbstractQuery;
+use Doctrine\ORM\ORMException;
 use Flowpack\Task\Domain\Model\TaskExecution;
 use Neos\Flow\Annotations as Flow;
 use Flowpack\Task\Domain\Task\Task;
 use Flowpack\Task\Domain\Task\TaskStatus;
 use Neos\Flow\Persistence\Doctrine\Repository;
+use Neos\Flow\Persistence\Exception\IllegalObjectTypeException;
 use Neos\Flow\Persistence\QueryInterface;
 use Neos\Flow\Persistence\QueryResultInterface;
 
@@ -54,7 +56,11 @@ class TaskExecutionRepository extends Repository
         );
 
         foreach ($query->execute() as $scheduledTask) {
-            $this->remove($scheduledTask);
+            try {
+                $this->remove($scheduledTask);
+            } catch (ORMException|IllegalObjectTypeException $e) {
+                throw new \RuntimeException('Failed to remove task from execution repository', 1645610863, $e);
+            }
         }
     }
 
