@@ -14,6 +14,7 @@ use Flowpack\Task\Domain\Task\TaskInterface;
 use Flowpack\Task\Domain\Task\TaskStatus;
 use Neos\Flow\Annotations as Flow;
 use Neos\Flow\Cli\CommandController;
+use Neos\Flow\Cli\Exception\StopCommandException;
 
 class TaskCommandController extends CommandController
 {
@@ -73,7 +74,7 @@ class TaskCommandController extends CommandController
      */
     public function runSingleCommand(string $taskIdentifier): void
     {
-        $task = $this->taskCollectionFactory->buildTasksFromConfiguration()->getTask($taskIdentifier);
+        $task = $this->getTaskByIdentifier($taskIdentifier);
         $this->scheduler->scheduleTask($task);
         $this->taskRunner->runTasks();
         $this->scheduler->scheduleTasks();
@@ -82,37 +83,42 @@ class TaskCommandController extends CommandController
 
     /**
      * Lists all defined tasks
+     * @throws \Exception
      */
     public function listCommand(): void
     {
+        $tasks = $this->taskCollectionFactory->buildTasksFromConfiguration()->toArray();
+        if ($tasks === []) {
+            $this->outputLine('<comment>No tasks configured yet</comment>');
+            return;
+        }
         $this->scheduler->scheduleTasks();
 
         $this->output->outputTable(array_map(function (TaskInterface $task) {
             /** @var TaskExecution $latestExecution */
-            $latestExecution = $this->taskExecutionRepository->findLatestExecution($task, 1, 0)->getFirst();
+            $latestExecution = $this->taskExecutionRepository->findLatestExecution($task, 1)->getFirst();
             return [
                 $task->getIdentifier(),
                 $task->getLabel(),
-                $task->getCronExpression()->getExpression(),
+                $task->getCronExpression(),
                 $task->getHandlerClass(),
                 $latestExecution === null || $latestExecution->getEndTime() === null ? '-' : $latestExecution->getEndTime()->format('Y-m-d H:i:s') ?? $latestExecution->getStartTime()->format('Y-m-d H:i:s'),
                 $latestExecution === null ? '-' : sprintf('<%s>%s</%s>', $this->lastExecutionStatusMapping[$latestExecution->getStatus()], $latestExecution->getStatus(), $this->lastExecutionStatusMapping[$latestExecution->getStatus()]),
                 $latestExecution === null || $latestExecution->getDuration() === null ? '-' : number_format($latestExecution->getDuration(), 2) . ' s',
                 $this->getNextExecutionInfo($task),
             ];
-        }, $this->taskCollectionFactory->buildTasksFromConfiguration()->toArray()),
+        }, $tasks),
             ['Identifier', 'Label', 'Cron Expression', 'Handler Class', 'Previous Run Date', 'Previous Run Status', 'Previous Run Duration', 'Next Run']
         );
     }
 
     /**
      * @param string $taskIdentifier
-     * @throws \JsonException
+     * @throws \JsonException|StopCommandException
      */
     public function showCommand(string $taskIdentifier): void
     {
-        /** @var Task $task */
-        $task = $this->taskCollectionFactory->buildTasksFromConfiguration()->get($taskIdentifier);
+        $task = $this->getTaskByIdentifier($taskIdentifier);
         $this->outputLine(sprintf('<b>%s (%s)</b>', $task->getLabel(), $taskIdentifier));
         $this->outputLine(PHP_EOL . $task->getDescription() . PHP_EOL);
 
@@ -123,7 +129,7 @@ class TaskCommandController extends CommandController
                 ['First Execution', $task->getFirstExecution() === null ? '-' : $task->getFirstExecution()->format('Y-m-d H:i:s')],
                 ['Last Execution', $task->getLastExecution() === null ? '-' : $task->getLastExecution()->format('Y-m-d H:i:s')],
                 ['Handler Class', $task->getHandlerClass()],
-                ['Workload', json_encode($task->getWorkload()->getData(), JSON_THROW_ON_ERROR + JSON_PRETTY_PRINT)],
+                ['Workload', $task->getWorkload() !== null ? json_encode($task->getWorkload()->getData(), JSON_THROW_ON_ERROR + JSON_PRETTY_PRINT) : '-'],
                 ['Next Run', $this->getNextExecutionInfo($task)],
             ]
         );
@@ -141,7 +147,7 @@ class TaskCommandController extends CommandController
                 return [
                     sprintf('<b>%s</b>', $execution->getScheduleTime()->format('Y-m-d H:i:s')),
                     number_format($execution->getDuration(), 2) . ' s',
-                    sprintf('<%s>%s</%s> %s %s', $this->lastExecutionStatusMapping[$execution->getStatus()], $execution->getStatus(), $this->lastExecutionStatusMapping[$execution->getStatus()], (string) $execution->getResult(), (string) $execution->getException()),
+                    sprintf('<%s>%s</%s> %s %s', $this->lastExecutionStatusMapping[$execution->getStatus()], $execution->getStatus(), $this->lastExecutionStatusMapping[$execution->getStatus()], $execution->getResult(), $execution->getException()),
                 ];
             }, $taskExecutions->toArray()),
             ['Date','Run Duration', 'Status']
@@ -149,10 +155,10 @@ class TaskCommandController extends CommandController
     }
 
     /**
-     * @param $task
+     * @param TaskInterface $task
      * @return string
      */
-    private function getNextExecutionInfo($task): string
+    private function getNextExecutionInfo(TaskInterface $task): string
     {
         $nextExecution = $this->taskExecutionRepository->findNextScheduled((new \DateTime())->add(new \DateInterval('P10Y')), [], $task);
         $nextExecutionInfo = 'Not Scheduled';
@@ -161,5 +167,20 @@ class TaskCommandController extends CommandController
             $nextExecutionInfo = $nextExecution->getScheduleTime() < (new \DateTime()) ? sprintf('<error>%s (delayed)</error>', $nextExecutionDate) : $nextExecutionDate;
         }
         return $nextExecutionInfo;
+    }
+
+    /**
+     * @param string $taskIdentifier
+     * @return TaskInterface
+     * @throws StopCommandException
+     */
+    private function getTaskByIdentifier(string $taskIdentifier): TaskInterface
+    {
+        try {
+            return $this->taskCollectionFactory->buildTasksFromConfiguration()->getTask($taskIdentifier);
+        } catch (\InvalidArgumentException $exception) {
+            $this->outputLine('<error>No task with id "%s" is configured</error>', [$taskIdentifier]);
+            $this->quit(1);
+        }
     }
 }

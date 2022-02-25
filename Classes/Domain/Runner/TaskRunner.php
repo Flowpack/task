@@ -28,8 +28,10 @@ use Flowpack\Task\TaskHandler\TaskHandlerFactory;
 use Neos\Flow\Annotations as Flow;
 use Neos\Flow\Log\Utility\LogEnvironment;
 use Neos\Flow\Persistence\Doctrine\PersistenceManager;
+use Neos\Flow\Persistence\Exception as PersistenceException;
 use Neos\Flow\Persistence\Exception\IllegalObjectTypeException;
 use Neos\Flow\Persistence\Exception\UnknownObjectException;
+use Neos\Utility\Exception\PropertyNotAccessibleException;
 use Psr\Log\LoggerInterface;
 
 class TaskRunner
@@ -102,7 +104,7 @@ class TaskRunner
     /**
      * Handle given execution and fire before and after events.
      *
-     * @throws Exception
+     * @throws \Throwable
      */
     private function handle(TaskExecution $execution): string
     {
@@ -111,7 +113,7 @@ class TaskRunner
         } catch (TaskRetryException $exception) {
             // this find is necessary because the storage could be
             // invalid (clear in doctrine) after handling an execution.
-            $this->reFetchExecution($execution);
+            $execution = $this->reFetchExecution($execution);
 
             if ($execution->getAttempts() === $exception->getMaximumAttempts()) {
                 throw $exception->getPrevious();
@@ -125,6 +127,9 @@ class TaskRunner
         }
     }
 
+    /**
+     * @throws \Throwable
+     */
     public function execute(TaskExecution $execution): string
     {
         $handler = $this->taskHandlerFactory->get($execution->getHandlerClass());
@@ -133,7 +138,7 @@ class TaskRunner
             $this->logger->info(sprintf('Start running task %s', $execution->getTaskIdentifier()), LogEnvironment::fromMethodName(__METHOD__));
             return $handler->handle($execution->getWorkload());
         } catch (TaskFailedException $exception) {
-            $this->logger->error(sprintf('Task %s failed with exception "%s"', $execution->getTaskIdentifier(), $exception->getPrevious()->getMessage()), LogEnvironment::fromMethodName(__METHOD__));
+            $this->logger->error(sprintf('Task %s failed with exception "%s"', $execution->getTaskIdentifier(), $exception->getPrevious() !== null ? $exception->getPrevious()->getMessage() : $exception->getMessage()), LogEnvironment::fromMethodName(__METHOD__));
             throw $exception->getPrevious();
         } catch (Exception $exception) {
             if (!$handler instanceof TaskRetryException) {
@@ -149,9 +154,9 @@ class TaskRunner
     /**
      * The given task passed the run.
      */
-    private function hasPassed(TaskExecution $execution, $result)
+    private function hasPassed(TaskExecution $execution, string $result): TaskExecution
     {
-        $this->reFetchExecution($execution);
+        $execution = $this->reFetchExecution($execution);
         $execution->setStatus(TaskStatus::COMPLETED);
         $execution->setResult($result);
 
@@ -160,7 +165,7 @@ class TaskRunner
 
     private function hasFailed(TaskExecution $execution, \Throwable $throwable): TaskExecution
     {
-        $this->reFetchExecution($execution);
+        $execution = $this->reFetchExecution($execution);
         $execution->setException($throwable->__toString());
         $execution->setStatus(TaskStatus::FAILED);
 
@@ -169,7 +174,7 @@ class TaskRunner
 
     private function finalize(TaskExecution $execution, float $startTime): void
     {
-        $this->reFetchExecution($execution);
+        $execution = $this->reFetchExecution($execution);
         if ($execution->getStatus() !== TaskStatus::PLANNED) {
             $execution->setEndTime(new DateTime());
             $execution->setDuration(microtime(true) - $startTime);
@@ -181,16 +186,20 @@ class TaskRunner
     /**
      * This find is necessary because the storage could be
      * invalid (clear in doctrine) after handling an execution.
-     *
-     * @param TaskExecution $execution
-     * @throws ORMException
-     * @throws OptimisticLockException
-     * @throws TransactionRequiredException
-     * @throws \Neos\Flow\Persistence\Exception
      */
-    private function reFetchExecution(TaskExecution $execution): void
+    private function reFetchExecution(TaskExecution $execution): TaskExecution
     {
-        $this->persistenceManager->persistAll();
-        $execution = $this->taskExecutionRepository->findByIdentifier($this->persistenceManager->getIdentifierByObject($execution));
+        try {
+            $this->persistenceManager->persistAll();
+        } catch (PersistenceException $e) {
+            throw new \RuntimeException('Failed persist executions', 1645611214, $e);
+        }
+        /** @var TaskExecution $newExecution */
+        try {
+            $newExecution = $this->taskExecutionRepository->findByIdentifier($this->persistenceManager->getIdentifierByObject($execution));
+        } catch (OptimisticLockException|TransactionRequiredException|ORMException|PropertyNotAccessibleException $e) {
+            throw new \RuntimeException('Failed to re-fetch task execution', 1645611153, $e);
+        }
+        return $newExecution;
     }
 }

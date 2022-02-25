@@ -110,7 +110,7 @@ class TaskExecution
     }
 
     /**
-     * @return Workload
+     * @return Workload|null
      */
     public function getWorkload(): ?Workload
     {
@@ -142,7 +142,7 @@ class TaskExecution
     }
 
     /**
-     * @return \DateTime
+     * @return \DateTime|null
      */
     public function getEndTime(): ?\DateTime
     {
@@ -150,7 +150,7 @@ class TaskExecution
     }
 
     /**
-     * @return float
+     * @return float|null
      */
     public function getDuration(): ?float
     {
@@ -158,7 +158,7 @@ class TaskExecution
     }
 
     /**
-     * @return string
+     * @return string|null
      */
     public function getResult(): ?string
     {
@@ -170,7 +170,7 @@ class TaskExecution
      */
     public function getException(): string
     {
-        return (string)$this->exception;
+        return $this->exception;
     }
 
     /**
