@@ -92,4 +92,4 @@ jobs:
 
     - name: Run Unit tests
       run: |
-        bin/phpunit --colors -c Build/BuildEssentials/PhpUnit/UnitTests.xml Packages/Application/${PACKAGE_NAME}/Tests/Unit
+        bin/phpunit --colors -c Build/BuildEssentials/PhpUnit/FunctionalTests.xml Packages/Application/${PACKAGE_NAME}/Tests/Functional
