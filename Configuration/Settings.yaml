@@ -4,3 +4,4 @@ Flowpack:
     lockStorage: 'flock://%FLOW_PATH_TEMPORARY%/SymfonyLockStorage'
     tasks: []
     keepTaskExecutionHistory: 3
+    keepRemovedTasksInTaskExecutionHistory: true
