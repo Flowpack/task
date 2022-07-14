@@ -10,7 +10,7 @@ Most of the architectural ideas behind the package are taken from [php-task](htt
 
 ## Installation
 
-```
+```bash
 composer require 'flowpack/task'
 ```
 
@@ -24,7 +24,7 @@ Flowpack:
     tasks:
       'a-unique-identifier':
         label: The label of this task
-        description: Some detailed description of thsi task
+        description: Some detailed description of this task
         # A class, implementing the TaskHandlerInterface  
         handlerClass: 'Vendor\Package\TaskHandler\TaskHandlerClass'
         cronExpression: '*/5 * * * *'
@@ -59,23 +59,23 @@ Also requires `getLockIdentifier(WorkloadInterface $workload): string` to be imp
 
 Schedule and run due tasks
 
-```sh
+```bash
 ./flow task:run
 ```
 Schedule and run a single task
 
-```sh
+```bash
 ./flow task:runSingle <taskIdentifier>
 ```
 
 Show a list of all defined and scheduled tasks:
 
-```sh
+```bash
 ./flow task:list
 ```
 
 Show details about a specific task:
 
-```sh
+```bash
 ./flow task:show <taskIdentifier>
 ```
