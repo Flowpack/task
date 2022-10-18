@@ -34,7 +34,7 @@ class TaskHandlerFactory
     public function get(string $taskHandlerClassName): TaskHandlerInterface
     {
         if (!class_exists($taskHandlerClassName)) {
-            throw new InvalidTaskHandlerException(sprintf('Not taskHandler with class "%s" was found', $taskHandlerClassName), 1627476970);
+            throw new InvalidTaskHandlerException(sprintf('No taskHandler with class "%s" was found', $taskHandlerClassName), 1627476970);
         }
 
         $taskHandler = $this->objectManager->get($taskHandlerClassName);

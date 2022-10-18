@@ -30,7 +30,7 @@ class PendingExecutionFinder
      * @Flow\InjectConfiguration(package="Flowpack.Task", path="lockStorage")
      * @var string
      */
-    protected $logStorageConfiguration;
+    protected $lockStorageConfiguration;
 
     /**
      * @Flow\Inject
@@ -42,7 +42,7 @@ class PendingExecutionFinder
     {
         $runTime = new \DateTime();
 
-        $lockFactory = new LockFactory(StoreFactory::createStore($this->logStorageConfiguration));
+        $lockFactory = new LockFactory(StoreFactory::createStore($this->lockStorageConfiguration));
 
         $skippedExecutions = [];
         while ($execution = $this->taskExecutionRepository->findNextScheduled($runTime, $skippedExecutions)) {
