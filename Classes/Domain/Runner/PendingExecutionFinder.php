@@ -55,7 +55,7 @@ class PendingExecutionFinder
 
             $lock = $lockFactory->createLock($handler->getLockIdentifier($execution->getWorkload()));
 
-            if ($lock->acquire()) {
+            if (!$lock->acquire()) {
                 $skippedExecutions[] = $execution;
                 $this->logger->warning(sprintf('Execution "%s" is locked and skipped.', $execution->getTaskIdentifier()), LogEnvironment::fromMethodName(__METHOD__));
                 continue;
