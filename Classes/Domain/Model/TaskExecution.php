@@ -65,10 +65,10 @@ class TaskExecution
     protected $result;
 
     /**
-     * @var string
+     * @var string|null
      * @ORM\Column(nullable = true, type = "text")
      */
-    protected $exception;
+    protected $exception = null;
 
     /**
      * @var int
@@ -166,9 +166,9 @@ class TaskExecution
     }
 
     /**
-     * @return string
+     * @return string|null
      */
-    public function getException(): string
+    public function getException(): ?string
     {
         return $this->exception;
     }
@@ -222,10 +222,10 @@ class TaskExecution
     }
 
     /**
-     * @param string $exception
+     * @param string|null $exception
      * @return TaskExecution
      */
-    public function setException(string $exception): TaskExecution
+    public function setException(?string $exception): TaskExecution
     {
         $this->exception = $exception;
         return $this;
