@@ -35,6 +35,12 @@ class TaskExecutionHistory
     protected int $keepTaskExecutionHistory = 3;
 
     /**
+     * @Flow\InjectConfiguration(package="Flowpack.Task", path="keepRemovedTasksInTaskExecutionHistory")
+     * @var bool
+     */
+    protected bool $keepRemovedTasksInTaskExecutionHistory = false;
+
+    /**
      * @Flow\Inject
      * @var TaskCollectionFactory
      */
@@ -50,12 +56,28 @@ class TaskExecutionHistory
     {
         $removedTaskExecutions = 0;
 
+        $configuredTaskHandlerClasses = [];
+
         /** @var Task $task */
         foreach ($this->taskCollectionFactory->buildTasksFromConfiguration() as $task) {
+            $configuredTaskHandlerClasses[] = $task->getHandlerClass();
             /** @var TaskExecution $taskExecution */
             foreach ($this->taskExecutionRepository->findLatestExecution($task, 0, $this->keepTaskExecutionHistory) as $taskExecution) {
                 $this->taskExecutionRepository->remove($taskExecution);
                 $removedTaskExecutions++;
+            }
+        }
+
+        if ($this->keepRemovedTasksInTaskExecutionHistory === false) {
+            $configuredTaskHandlerClasses = \array_unique($configuredTaskHandlerClasses);
+
+            /** @var TaskExecution $taskExecution */
+            foreach ($this->taskExecutionRepository->findAll() as $taskExecution) {
+                $taskHandlerClass = $taskExecution->getHandlerClass();
+                if (!\in_array($taskHandlerClass, $configuredTaskHandlerClasses) || !class_exists($taskHandlerClass)) {
+                    $this->taskExecutionRepository->remove($taskExecution);
+                    $removedTaskExecutions++;
+                }
             }
         }
 
