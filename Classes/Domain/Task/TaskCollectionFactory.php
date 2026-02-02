@@ -5,6 +5,7 @@ namespace Flowpack\Task\Domain\Task;
 
 use Cron\CronExpression;
 use Neos\Flow\Annotations as Flow;
+use Neos\Flow\ObjectManagement\ObjectManagerInterface;
 
 /**
  * @Flow\Scope("singleton")
@@ -18,6 +19,13 @@ class TaskCollectionFactory
     protected array $taskConfigurations = [];
 
     protected ?TaskCollection $taskCollection = null;
+
+    private ObjectManagerInterface $objectManager;
+
+    public function __construct(ObjectManagerInterface $objectManager)
+    {
+        $this->objectManager = $objectManager;
+    }
 
     public function buildTasksFromConfiguration(): TaskCollection
     {
@@ -38,7 +46,7 @@ class TaskCollectionFactory
                 $taskConfiguration['handlerClass'],
                 $taskConfiguration['label'] ?? $taskIdentifier,
                 $taskConfiguration['description'] ?? '',
-                new Workload($taskConfiguration['workload'] ?? []),
+                $this->objectManager->get(WorkloadInterface::class, $taskConfiguration['workload'] ?? []),
                 new \DateTime($taskConfiguration['firstExecution'] ?? 'now'),
                 ($taskConfiguration['lastExecution'] ?? null) === null ? null : new \DateTime($taskConfiguration['lastExecution'])
             ));

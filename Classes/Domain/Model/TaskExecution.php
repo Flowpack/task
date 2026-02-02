@@ -5,7 +5,7 @@ namespace Flowpack\Task\Domain\Model;
 
 use Flowpack\Task\Domain\Task\Task;
 use Flowpack\Task\Domain\Task\TaskStatus;
-use Flowpack\Task\Domain\Task\Workload;
+use Flowpack\Task\Domain\Task\WorkloadInterface;
 use Neos\Flow\Annotations as Flow;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -21,7 +21,7 @@ class TaskExecution
 
     /**
      * @ORM\Column(name="workload", type="object")
-     * @var Workload
+     * @var WorkloadInterface
      */
     protected $workload;
 
@@ -110,9 +110,9 @@ class TaskExecution
     }
 
     /**
-     * @return Workload|null
+     * @return WorkloadInterface|null
      */
-    public function getWorkload(): ?Workload
+    public function getWorkload(): ?WorkloadInterface
     {
         return $this->workload;
     }
