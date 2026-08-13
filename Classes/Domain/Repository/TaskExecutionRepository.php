@@ -64,6 +64,67 @@ class TaskExecutionRepository extends Repository
         }
     }
 
+    /**
+     * Queries task executions by parameters.
+     *
+     * @param string|null $taskIdentifier
+     * @param string|null $before
+     * @param array $statusArray
+     * @return array
+     */
+    public function findByOptions(?string $taskIdentifier, ?string $before, array $statusArray): array
+    {
+        $query = $this->createQuery();
+
+        $constraints = [];
+        if ($taskIdentifier !== null) {
+            $constraints[] = $query->equals('taskIdentifier', $taskIdentifier);
+        }
+        if ($before !== null) $constraints[] = $query->logicalOr(
+            $query->lessThan('endTime', $before),
+            $query->lessThan('scheduleTime', $before),
+        );
+        if ($statusArray) {
+            $statusConstraints = [];
+
+            foreach ($statusArray as $status) {
+                $statusConstraints[] = $query->equals('status', $status);
+            }
+
+            if (count($statusConstraints) === 1) {
+                $constraints[] = $statusConstraints[0];
+            } elseif (count($statusConstraints) > 1) {
+                $constraints[] = $query->logicalOr($statusConstraints);
+            }
+        }
+
+        if ($constraints) {
+            $query->matching(
+                $query->logicalAnd(
+                    $constraints
+                )
+            );
+        }
+
+        return $query->execute()->toArray();
+    }
+
+    /**
+     * @param array $entries
+     * @return void
+     * @throws \RuntimeException
+     */
+    public function removeEntries(array $entries): void
+    {
+        foreach ($entries as $entry) {
+            try {
+                $this->remove($entry);
+            } catch (ORMException|IllegalObjectTypeException $e) {
+                throw new \RuntimeException('Failed to remove task from execution repository', 1645610863, $e);
+            }
+        }
+    }
+
     public function findLatestExecution(Task $task, int $limit = 5, int $offset = 0): QueryResultInterface
     {
         $query = $this->createQuery();

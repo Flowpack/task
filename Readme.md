@@ -4,7 +4,7 @@
 
 This package provides a simple to use task scheduler for Neos Flow. Tasks are configured via settings, recurring tasks can be configured using cron syntax. Detailed options configure the first and last executions as well as options for the class handling the task. 
 
-Scheduling and running tasks are decoupled: The `Scheduler` schedules tasks whcih the are executed by the `TaskRunner`. This architecture allows receiving and displaying metrics of already executed tasks.
+Scheduling and running tasks are decoupled: The `Scheduler` schedules tasks which then are executed by the `TaskRunner`. This architecture allows receiving and displaying metrics of already executed tasks.
 
 Most of the architectural ideas behind the package are taken from [php-task](https://github.com/php-task/php-task), and reimplemented for Neos Flow.
 
@@ -80,4 +80,10 @@ Show details about a specific task:
 
 ```bash
 ./flow task:show <taskIdentifier>
+```
+
+Truncate task history database:
+
+```bash
+./flow task:clean [--task=<taskIdentifier>] [--status=<status>] [--before=<date>] [--dry] [--verbose]
 ```

@@ -7,7 +7,6 @@ use Flowpack\Task\Domain\Model\TaskExecution;
 use Flowpack\Task\Domain\Repository\TaskExecutionRepository;
 use Flowpack\Task\Domain\Runner\TaskRunner;
 use Flowpack\Task\Domain\Scheduler\Scheduler;
-use Flowpack\Task\Domain\Task\Task;
 use Flowpack\Task\Domain\Task\TaskCollectionFactory;
 use Flowpack\Task\Domain\Task\TaskExecutionHistory;
 use Flowpack\Task\Domain\Task\TaskInterface;
@@ -152,6 +151,60 @@ class TaskCommandController extends CommandController
             }, $taskExecutions->toArray()),
             ['Date','Run Duration', 'Status']
         );
+    }
+
+    /**
+     * Clean task execution history database.
+     *
+     * Removes specified entries from the task execution history database.
+     *
+     * Can filter by task, task status or date.
+     *
+     * @param string|null $task Task Identifier
+     * @param string|null $before Datetime
+     * @param string|null $status Status, use ',' to separate multiple
+     * @param bool $dry Enable dryrun, does not delete entries
+     * @param bool $verbose Enable Verbose output
+     */
+    public function cleanCommand(?string $task = null, ?string $before = null, ?string $status = null, bool $verbose = false, bool $dry=false): void
+    {
+        $statusArray = [];
+        if ($status !== null) {
+            foreach (explode(',', $status) as $s) {
+                $statusArray[] = trim($s);
+            }
+        }
+
+        $targets = $this->taskExecutionRepository->findByOptions($task, $before, $statusArray);
+
+        $confirm = true;
+        if (!$dry) $confirm = $this->output->askConfirmation("Do you want to delete " . (count($targets)) . " entries? [Y/n]");
+
+        if ($confirm) {
+            if (!$dry) $this->taskExecutionRepository->removeEntries($targets);
+
+            if ($verbose) {
+                $this->output->outputTable(array_map(function (TaskExecution $task) {
+                    $label = '';
+                    try {
+                        $label = $this->getTaskByIdentifier($task->getTaskIdentifier())->getLabel();
+                    } catch (StopCommandException $exception) {}
+                    return [
+                        $task->getTaskIdentifier(),
+                        $label,
+                        $task->getHandlerClass(),
+                        $task->getStatus(),
+                        $task->getScheduleTime()->format('Y-m-d H:i:s'),
+                        $task->getStatus()!==TaskStatus::PLANNED ? $task->getStartTime()->format('Y-m-d H:i:s') : 'null',
+                        $task->getStatus()!==TaskStatus::PLANNED ? $task->getEndTime()->format('Y-m-d H:i:s') : 'null',
+                    ];
+                }, $targets),
+                    ['Identifier', 'Label', 'Handler Class', 'Status', 'Scheduled Time', 'Start Time', 'End Time']
+                );
+
+            }
+            $this->outputLine(($dry ? "Targets " : "Removed ") . count($targets) . " entries");
+        }
     }
 
     /**
