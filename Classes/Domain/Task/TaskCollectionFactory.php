@@ -5,12 +5,19 @@ namespace Flowpack\Task\Domain\Task;
 
 use Cron\CronExpression;
 use Neos\Flow\Annotations as Flow;
+use Neos\Flow\Log\Utility\LogEnvironment;
+use Psr\Log\LoggerInterface;
 
 /**
  * @Flow\Scope("singleton")
  */
 class TaskCollectionFactory
 {
+    /**
+     * @Flow\Inject
+     * @var LoggerInterface
+     */
+    protected $systemLogger;
 
     /**
      * @Flow\InjectConfiguration(package="Flowpack.Task", path="tasks")
@@ -31,6 +38,11 @@ class TaskCollectionFactory
 
             $cronExpressionPattern = $taskConfiguration['cronExpression'] ?? '';
             $cronExpression = $cronExpressionPattern !== '' ? new CronExpression($cronExpressionPattern) : null;
+
+            if (!class_exists($taskConfiguration['handlerClass'])) {
+                $this->systemLogger->info(sprintf('Taskhandler class not found - Task "%s" is ignored', $taskConfiguration['handlerClass']), LogEnvironment::fromMethodName(__METHOD__));
+                continue;
+            }
 
             $this->taskCollection->set($taskIdentifier, new Task(
                 $taskIdentifier,
